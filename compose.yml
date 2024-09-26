@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: .
+      target: ${ENV}
+      args:
+        - APP_PORT=${APP_PORT}
+    depends_on:
+      - db
+      - mongo
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    environment:
+      - DB_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - MONGO_URL=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}?authSource=admin
+      - MONGO_DB=${MONGO_DB}
+    # volumes:
+    #   - .:/code
+    networks:
+      - app-network
+
+  db:
+    image: postgres:16
+    shm_size: 128mb
+    hostname: ${DB_HOST}
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+  mongo:
+    image: mongo:7
+    hostname: ${MONGO_HOST}
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+volumes:
+  db-data:
+  mongo-data:
+
+networks:
+  app-network:
+    driver: bridge
+    name: app-network
+  
